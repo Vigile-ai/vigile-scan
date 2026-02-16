@@ -1,0 +1,47 @@
+{
+  "name": "vigil-scan",
+  "version": "0.1.0",
+  "description": "Security scanner for AI agent tools — detect tool poisoning, permission abuse, and supply chain attacks in MCP servers",
+  "main": "dist/index.js",
+  "bin": {
+    "vigil-scan": "dist/index.js",
+    "vigil": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "start": "node dist/index.js",
+    "lint": "eslint src/",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "mcp",
+    "security",
+    "ai-agent",
+    "scanner",
+    "trust",
+    "model-context-protocol",
+    "tool-poisoning",
+    "ai-security"
+  ],
+  "author": "Vigil AI Security",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vigil-ai/vigil-cli"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "ora": "^8.1.0",
+    "glob": "^10.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0"
+  }
+}
