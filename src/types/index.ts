@@ -42,7 +42,12 @@ export type FindingCategory =
   | 'malware-delivery'
   | 'stealth-operations'
   | 'safety-bypass'
-  | 'persistence-abuse';
+  | 'persistence-abuse'
+  // Sentinel (runtime monitoring) categories
+  | 'c2-beaconing'
+  | 'dns-tunneling'
+  | 'covert-channel'
+  | 'phone-home';
 
 /** A single security finding from scanning */
 export interface Finding {
@@ -131,6 +136,12 @@ export interface ScanOptions {
   skills?: boolean;
   /** Scan both MCP servers and skills */
   all?: boolean;
+  /** Enable Sentinel runtime monitoring (Pro+ feature) */
+  sentinel?: boolean;
+  /** Sentinel: specific server to monitor */
+  sentinelServer?: string;
+  /** Sentinel: monitoring duration in seconds */
+  sentinelDuration?: number;
 }
 
 // ============================================================
