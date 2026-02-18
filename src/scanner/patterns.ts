@@ -1,5 +1,5 @@
 // ============================================================
-// Vigil CLI — Detection Patterns
+// Vigile CLI — Detection Patterns
 // ============================================================
 // These patterns detect known attack vectors in MCP server
 // tool descriptions and configurations. Based on real-world

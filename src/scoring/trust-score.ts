@@ -1,5 +1,5 @@
 // ============================================================
-// Vigil CLI — Trust Score Calculator
+// Vigile CLI — Trust Score Calculator
 // ============================================================
 // Calculates a 0-100 trust score based on weighted factors.
 // For CLI v1, we focus on what we can analyze locally:

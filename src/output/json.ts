@@ -1,8 +1,8 @@
 // ============================================================
-// Vigil CLI — JSON Output Formatter
+// Vigile CLI — JSON Output Formatter
 // ============================================================
 // Outputs scan results as structured JSON for CI/CD integration,
-// piping to other tools, or sending to the Vigil API.
+// piping to other tools, or sending to the Vigile API.
 
 import type { ScanSummary } from '../types/index.js';
 

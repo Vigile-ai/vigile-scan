@@ -1,5 +1,5 @@
 // ============================================================
-// Vigil CLI — MCP Config Discovery Orchestrator
+// Vigile CLI — MCP Config Discovery Orchestrator
 // ============================================================
 // Auto-discovers MCP server configurations across all supported
 // AI tools on the user's machine. Supports macOS, Windows, Linux.
@@ -10,6 +10,9 @@ import { discoverClaudeCode } from './claude-code.js';
 import { discoverWindsurf } from './windsurf.js';
 import { discoverVSCode } from './vscode.js';
 import type { MCPServerEntry, MCPClient } from '../types/index.js';
+
+// Re-export skill discovery for use in CLI
+export { discoverAllSkills } from './skills.js';
 
 export interface DiscoveryResult {
   servers: MCPServerEntry[];

@@ -1,5 +1,5 @@
 // ============================================================
-// Vigil CLI — Type Definitions
+// Vigile CLI — Type Definitions
 // ============================================================
 
 /** Supported IDE/tool that can have MCP configurations */
@@ -37,7 +37,12 @@ export type FindingCategory =
   | 'data-exfiltration'
   | 'dependency-risk'
   | 'rug-pull'
-  | 'obfuscation';
+  | 'obfuscation'
+  | 'instruction-injection'
+  | 'malware-delivery'
+  | 'stealth-operations'
+  | 'safety-bypass'
+  | 'persistence-abuse';
 
 /** A single security finding from scanning */
 export interface Finding {
@@ -94,12 +99,16 @@ export type TrustLevel = 'trusted' | 'caution' | 'risky' | 'dangerous';
 export interface ScanSummary {
   /** Total servers scanned */
   totalServers: number;
+  /** Total skills scanned */
+  totalSkills: number;
   /** Servers by trust level */
   byTrustLevel: Record<TrustLevel, number>;
   /** Total findings by severity */
   bySeverity: Record<Severity, number>;
-  /** Individual scan results */
+  /** Individual MCP scan results */
   results: ScanResult[];
+  /** Individual skill scan results */
+  skillResults: SkillScanResult[];
   /** When the scan was performed */
   timestamp: string;
   /** Scanner version */
@@ -118,4 +127,70 @@ export interface ScanOptions {
   output?: string;
   /** Only scan specific client */
   client?: MCPClient;
+  /** Scan skills only (SKILL.md, .mdc, CLAUDE.md, etc.) */
+  skills?: boolean;
+  /** Scan both MCP servers and skills */
+  all?: boolean;
+}
+
+// ============================================================
+// Skill Scanning Types
+// ============================================================
+
+/** Sources where agent skills can be discovered */
+export type SkillSource =
+  | 'claude-code'
+  | 'github-copilot'
+  | 'cursor'
+  | 'memory-file'
+  | 'custom';
+
+/** Types of skill files */
+export type SkillFileType =
+  | 'skill.md'
+  | 'mdc-rule'
+  | 'claude.md'
+  | 'soul.md'
+  | 'memory.md';
+
+/** A discovered agent skill file */
+export interface SkillEntry {
+  /** Skill name (derived from directory or file name) */
+  name: string;
+  /** Where this skill was discovered */
+  source: SkillSource;
+  /** Type of skill file */
+  fileType: SkillFileType;
+  /** Absolute path to the skill file */
+  filePath: string;
+  /** Raw content of the skill file */
+  content: string;
+  /** File size in bytes */
+  size: number;
+  /** Whether the skill is project-local or global */
+  scope: 'project' | 'global';
+}
+
+/** Results from scanning a single skill file */
+export interface SkillScanResult {
+  /** The skill that was scanned */
+  skill: SkillEntry;
+  /** Trust score (0-100) */
+  trustScore: number;
+  /** Score breakdown by factor */
+  scoreBreakdown: ScoreBreakdown;
+  /** Security findings */
+  findings: Finding[];
+  /** Trust level label */
+  trustLevel: TrustLevel;
+  /** Scan timestamp */
+  scannedAt: string;
+}
+
+/** Discovery result for skills */
+export interface SkillDiscoveryResult {
+  skills: SkillEntry[];
+  locationsChecked: number;
+  locationsFound: number;
+  errors: Array<{ source: SkillSource; error: string }>;
 }
