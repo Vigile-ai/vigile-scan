@@ -25,7 +25,7 @@ import {
 import { formatJSON } from './output/json.js';
 import type { ScanOptions, ScanSummary, ScanResult, SkillScanResult, MCPClient } from './types/index.js';
 
-const VERSION = '0.1.1';
+const VERSION = '0.1.2';
 
 const program = new Command();
 
