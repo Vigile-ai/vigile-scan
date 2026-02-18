@@ -1,5 +1,5 @@
 // ============================================================
-// Vigil CLI — Scanner Engine
+// Vigile CLI — Scanner Engine
 // ============================================================
 // Analyzes MCP server entries for security issues by examining
 // the command, args, env vars, and (where possible) tool

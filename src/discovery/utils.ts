@@ -1,5 +1,5 @@
 // ============================================================
-// Vigil CLI — Discovery Utilities
+// Vigile CLI — Discovery Utilities
 // ============================================================
 
 import { readFile } from 'fs/promises';

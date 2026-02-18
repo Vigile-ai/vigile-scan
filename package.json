@@ -1,18 +1,24 @@
 {
-  "name": "vigil-scan",
+  "name": "vigile-scan",
   "version": "0.1.0",
-  "description": "Security scanner for AI agent tools — detect tool poisoning, permission abuse, and supply chain attacks in MCP servers",
+  "description": "Security scanner for AI agent tools — detect tool poisoning, permission abuse, and supply chain attacks in MCP servers and agent skills",
   "main": "dist/index.js",
   "bin": {
-    "vigil-scan": "dist/index.js",
-    "vigil": "dist/index.js"
+    "vigile-scan": "dist/index.js",
+    "vigile": "dist/index.js"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
     "start": "node dist/index.js",
     "lint": "eslint src/",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "mcp",
@@ -22,13 +28,27 @@
     "trust",
     "model-context-protocol",
     "tool-poisoning",
-    "ai-security"
+    "ai-security",
+    "agent-skills",
+    "skill-scanning",
+    "prompt-injection",
+    "data-exfiltration",
+    "claude",
+    "cursor",
+    "copilot"
   ],
-  "author": "Vigil AI Security",
+  "author": "Vigile AI Security",
   "license": "Apache-2.0",
+  "homepage": "https://vigile.dev",
   "repository": {
     "type": "git",
-    "url": "https://github.com/vigil-ai/vigil-cli"
+    "url": "https://github.com/Vigile-ai/vigile-cli"
+  },
+  "bugs": {
+    "url": "https://github.com/Vigile-ai/vigile-cli/issues"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "engines": {
     "node": ">=18.0.0"
