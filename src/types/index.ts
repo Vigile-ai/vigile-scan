@@ -142,6 +142,8 @@ export interface ScanOptions {
   sentinelServer?: string;
   /** Sentinel: monitoring duration in seconds */
   sentinelDuration?: number;
+  /** Skip uploading scan results to Vigile API */
+  noUpload?: boolean;
 }
 
 // ============================================================
@@ -204,4 +206,20 @@ export interface SkillDiscoveryResult {
   locationsChecked: number;
   locationsFound: number;
   errors: Array<{ source: SkillSource; error: string }>;
+}
+
+// ============================================================
+// API Upload Types
+// ============================================================
+
+/** Summary of API upload results */
+export interface UploadSummary {
+  /** Number of MCP scan results uploaded */
+  mcpUploaded: number;
+  /** Number of skill scan results uploaded */
+  skillsUploaded: number;
+  /** Number of upload failures */
+  failures: number;
+  /** Error messages from failures */
+  errors: string[];
 }

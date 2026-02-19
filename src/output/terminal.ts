@@ -14,6 +14,8 @@ import type {
   Severity,
   SkillFileType,
 } from '../types/index.js';
+import type { SentinelReport, SentinelThreatLevel } from '../sentinel/index.js';
+import { SENTINEL_MARKETING } from '../sentinel/index.js';
 
 const TRUST_COLORS: Record<TrustLevel, (text: string) => string> = {
   trusted: chalk.green,
@@ -279,4 +281,168 @@ function scoreBar(score: number): string {
     score >= 40 ? chalk.hex('#FF8C00') :
     chalk.red;
   return color('█'.repeat(filled)) + chalk.gray('░'.repeat(empty));
+}
+
+// ============================================================
+// Sentinel Output
+// ============================================================
+
+const SENTINEL_THREAT_COLORS: Record<SentinelThreatLevel, (text: string) => string> = {
+  clean: chalk.green,
+  suspicious: chalk.yellow,
+  malicious: chalk.red,
+  critical: chalk.bgRed.white.bold,
+};
+
+const SENTINEL_THREAT_ICONS: Record<SentinelThreatLevel, string> = {
+  clean: '✓',
+  suspicious: '⚠',
+  malicious: '✗',
+  critical: '!!!',
+};
+
+/** Print a Sentinel monitoring report */
+export function printSentinelReport(report: SentinelReport): void {
+  const color = SENTINEL_THREAT_COLORS[report.threatLevel];
+  const icon = SENTINEL_THREAT_ICONS[report.threatLevel];
+
+  console.log('');
+  console.log(
+    chalk.bold(`  ${icon} `) +
+    chalk.bold(`Sentinel: ${report.serverName}`) +
+    '  ' +
+    color(`[Threat: ${report.threatScore}/100 ${report.threatLevel.toUpperCase()}]`)
+  );
+
+  console.log(chalk.gray(`    Monitored: ${report.monitoringDuration.toFixed(0)}s | Events: ${report.totalEvents} | Destinations: ${report.uniqueDestinations.length}`));
+
+  if (report.uniqueDestinations.length > 0) {
+    console.log(chalk.gray(`    Destinations:`));
+    for (const dest of report.uniqueDestinations.slice(0, 10)) {
+      console.log(chalk.gray(`      → ${dest}`));
+    }
+    if (report.uniqueDestinations.length > 10) {
+      console.log(chalk.gray(`      ... and ${report.uniqueDestinations.length - 10} more`));
+    }
+  }
+
+  if (report.findings.length === 0) {
+    console.log(chalk.green('    No suspicious network behavior detected.'));
+  } else {
+    console.log(chalk.dim(`    ${report.findings.length} finding(s):`));
+    for (const finding of report.findings) {
+      const fColor = SEVERITY_COLORS[finding.severity];
+      const fIcon = SEVERITY_ICONS[finding.severity];
+      console.log(
+        `      ${fColor(`[${fIcon}]`)} ${fColor(finding.severity.toUpperCase())} ` +
+        chalk.white(finding.title) +
+        chalk.gray(` (${finding.id})`)
+      );
+      console.log(chalk.gray(`          ${finding.description}`));
+      if (finding.evidence && finding.evidence.length > 0) {
+        console.log(chalk.gray(`          Evidence: ${finding.evidence.length} network event(s)`));
+      }
+      console.log(chalk.cyan(`          → ${finding.recommendation}`));
+    }
+  }
+
+  console.log(chalk.gray(`    ${report.startedAt} → ${report.endedAt}`));
+  console.log('');
+}
+
+/** Print the Sentinel upgrade prompt (for free tier) */
+export function printSentinelUpgrade(): void {
+  console.log('');
+  console.log(chalk.bold.hex('#2C4A7C')(`  🛡️  ${SENTINEL_MARKETING.featureName}`));
+  console.log(chalk.white(`  ${SENTINEL_MARKETING.tagline}`));
+  console.log('');
+  for (const cat of SENTINEL_MARKETING.categories) {
+    console.log(chalk.white(`    ${cat.icon}  ${chalk.bold(cat.name)}`));
+    console.log(chalk.gray(`       ${cat.desc}`));
+  }
+  console.log('');
+  console.log(chalk.yellow(`  ⚡ Sentinel is a Pro feature. Upgrade to unlock runtime monitoring:`));
+  console.log(chalk.cyan(`     https://vigile.dev/pricing`));
+  console.log('');
+  console.log(chalk.gray(`  Pro ($19/mo)       — 5-min sessions, 3 servers`));
+  console.log(chalk.gray(`  Team ($99/mo)      — 30-min sessions, 10 servers, real-time alerts`));
+  console.log(chalk.gray(`  Enterprise ($999+) — Unlimited, custom rules, SLA`));
+  console.log('');
+}
+
+// ============================================================
+// API Upload & Auth Output
+// ============================================================
+
+/** Print auth status info */
+export function printAuthStatus(info: {
+  authenticated: boolean;
+  source?: 'env' | 'config';
+  email?: string;
+  tier?: string;
+  name?: string;
+  error?: string;
+}): void {
+  if (info.authenticated) {
+    console.log(chalk.green(`  Authenticated as ${info.email}`));
+    console.log(chalk.gray(`    Tier: ${(info.tier || 'free').toUpperCase()}`));
+    if (info.name) {
+      console.log(chalk.gray(`    Name: ${info.name}`));
+    }
+    console.log(
+      chalk.gray(
+        `    Source: ${info.source === 'env' ? 'VIGILE_TOKEN env var' : '~/.vigile/config.json'}`,
+      ),
+    );
+  } else {
+    console.log(chalk.yellow('  Not authenticated.'));
+    if (info.error) {
+      console.log(chalk.red(`    Error: ${info.error}`));
+    }
+    console.log(chalk.gray('  Run `vigile-scan auth login` or set VIGILE_TOKEN to authenticate.'));
+  }
+  console.log('');
+}
+
+/** Print auth login success */
+export function printAuthLoginSuccess(email: string, tier: string): void {
+  console.log('');
+  console.log(chalk.green('  Authenticated successfully!'));
+  console.log(chalk.gray(`    Email: ${email}`));
+  console.log(chalk.gray(`    Tier:  ${tier.toUpperCase()}`));
+  console.log(chalk.gray('    Token stored in ~/.vigile/config.json'));
+  console.log('');
+}
+
+/** Print upload success summary */
+export function printUploadSuccess(summary: {
+  mcpUploaded: number;
+  skillsUploaded: number;
+  failures: number;
+}): void {
+  const total = summary.mcpUploaded + summary.skillsUploaded;
+  if (total > 0) {
+    console.log(chalk.green(`  Uploaded ${total} result(s) to Vigile registry.`));
+    if (summary.mcpUploaded > 0) {
+      console.log(chalk.gray(`    MCP servers: ${summary.mcpUploaded}`));
+    }
+    if (summary.skillsUploaded > 0) {
+      console.log(chalk.gray(`    Skills: ${summary.skillsUploaded}`));
+    }
+  }
+  if (summary.failures > 0) {
+    console.log(chalk.yellow(`  ${summary.failures} upload(s) failed (results saved locally).`));
+  }
+  console.log('');
+}
+
+/** Print upload skip message (when not authenticated or --no-upload) */
+export function printUploadSkipped(reason: 'not-authenticated' | 'no-upload-flag'): void {
+  if (reason === 'not-authenticated') {
+    console.log(
+      chalk.gray('  Tip: Run `vigile-scan auth login` to upload results to the Vigile registry.'),
+    );
+    console.log('');
+  }
+  // For --no-upload flag, we stay silent (user explicitly opted out)
 }
