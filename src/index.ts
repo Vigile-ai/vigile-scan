@@ -505,7 +505,7 @@ async function runSentinel(
 ): Promise<void> {
   // Resolve tier: API if authenticated, else env var fallback
   const client = await getAuthenticatedClient();
-  let tier: 'free' | 'pro' | 'team' | 'enterprise' = 'free';
+  let tier: 'free' | 'pro' = 'free';
 
   if (client) {
     const meResult = await client.getMe();

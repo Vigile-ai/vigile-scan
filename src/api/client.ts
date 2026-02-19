@@ -21,7 +21,7 @@ export interface ApiUserInfo {
   id: number;
   email: string;
   name: string | null;
-  tier: string; // 'free' | 'pro' | 'team' | 'enterprise'
+  tier: string; // 'free' | 'pro' (team/enterprise planned for future)
 }
 
 export interface ApiScanResponse {
