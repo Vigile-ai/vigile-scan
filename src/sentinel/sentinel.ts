@@ -369,7 +369,8 @@ export class SentinelEngine {
 // Sentinel is a premium feature (Pro tier and above).
 // ──────────────────────────────────────────────────────────
 
-export type SubscriptionTier = 'free' | 'pro' | 'team' | 'enterprise';
+// Launch tiers: free + pro only. Team and enterprise planned for future builds.
+export type SubscriptionTier = 'free' | 'pro';
 
 export interface SentinelFeatureGate {
   /** Whether Sentinel monitoring is available */
@@ -406,30 +407,31 @@ export function getSentinelFeatures(tier: SubscriptionTier): SentinelFeatureGate
         maxDurationSeconds: 300, // 5 minutes
         maxConcurrentServers: 3,
         behavioralDetection: true,
-        realTimeAlerts: false, // Team+ only
+        realTimeAlerts: false, // Future: Team+ only
         historyRetentionDays: 7,
         apiAccess: true,
       };
-    case 'team':
-      return {
-        monitoringEnabled: true,
-        maxDurationSeconds: 1800, // 30 minutes
-        maxConcurrentServers: 10,
-        behavioralDetection: true,
-        realTimeAlerts: true,
-        historyRetentionDays: 30,
-        apiAccess: true,
-      };
-    case 'enterprise':
-      return {
-        monitoringEnabled: true,
-        maxDurationSeconds: -1, // Unlimited (continuous)
-        maxConcurrentServers: -1, // Unlimited
-        behavioralDetection: true,
-        realTimeAlerts: true,
-        historyRetentionDays: 365,
-        apiAccess: true,
-      };
+    // Future tiers — uncomment when team/enterprise plans launch
+    // case 'team':
+    //   return {
+    //     monitoringEnabled: true,
+    //     maxDurationSeconds: 1800, // 30 minutes
+    //     maxConcurrentServers: 10,
+    //     behavioralDetection: true,
+    //     realTimeAlerts: true,
+    //     historyRetentionDays: 30,
+    //     apiAccess: true,
+    //   };
+    // case 'enterprise':
+    //   return {
+    //     monitoringEnabled: true,
+    //     maxDurationSeconds: -1, // Unlimited (continuous)
+    //     maxConcurrentServers: -1, // Unlimited
+    //     behavioralDetection: true,
+    //     realTimeAlerts: true,
+    //     historyRetentionDays: 365,
+    //     apiAccess: true,
+    //   };
   }
 }
 
