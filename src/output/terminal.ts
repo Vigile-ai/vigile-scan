@@ -58,9 +58,9 @@ const FILE_TYPE_LABELS: Record<SkillFileType, string> = {
 /** Print the Vigile banner */
 export function printBanner(): void {
   console.log('');
-  console.log(chalk.bold.hex('#2C4A7C')('  ╦  ╦╦╔═╗╦╦  '));
-  console.log(chalk.bold.hex('#2C4A7C')('  ╚╗╔╝║║ ╦║║  '));
-  console.log(chalk.bold.hex('#2C4A7C')('   ╚╝ ╩╚═╝╩╩═╝'));
+  console.log(chalk.bold.hex('#2C4A7C')('  ╦  ╦╦╔═╗╦╦  ╔═╗'));
+  console.log(chalk.bold.hex('#2C4A7C')('  ╚╗╔╝║║ ╦║║  ║╣ '));
+  console.log(chalk.bold.hex('#2C4A7C')('   ╚╝ ╩╚═╝╩╩═╝╚═╝'));
   console.log(chalk.gray('  AI Agent Security Scanner'));
   console.log('');
 }
