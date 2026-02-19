@@ -1,4 +1,4 @@
-name: API CI
+name: CLI CI
 
 on:
   push:
@@ -7,23 +7,21 @@ on:
     branches: [main]
 
 jobs:
-  test:
+  test-and-build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-node@v4
         with:
-          python-version: "3.12"
-          cache: pip
+          node-version: "20"
+          cache: npm
 
       - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install pytest pytest-asyncio
+        run: npm install --no-package-lock
 
       - name: Run tests
-        run: python -m pytest tests/ -v
+        run: npx vitest run
 
-      - name: Check import health
-        run: python -c "from app.main import app; print('App imports OK')"
+      - name: Build
+        run: npm run build
