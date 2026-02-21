@@ -1,6 +1,6 @@
 {
   "name": "vigile-scan",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Security scanner for AI agent tools — detect tool poisoning, permission abuse, and supply chain attacks in MCP servers and agent skills",
   "main": "dist/index.js",
   "bin": {
