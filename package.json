@@ -4,8 +4,8 @@
   "description": "Security scanner for AI agent tools — detect tool poisoning, permission abuse, and supply chain attacks in MCP servers and agent skills",
   "main": "dist/index.js",
   "bin": {
-    "vigile-scan": "dist/index.js",
-    "vigile": "dist/index.js"
+    "vigile-scan": "./dist/index.js",
+    "vigile": "./dist/index.js"
   },
   "files": [
     "dist",
@@ -13,7 +13,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && chmod +x dist/index.js",
     "dev": "tsup --watch",
     "start": "node dist/index.js",
     "lint": "eslint src/",
