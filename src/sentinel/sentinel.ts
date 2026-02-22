@@ -18,7 +18,7 @@
 //   npx vigile-scan --sentinel --server <name>  # Monitor specific server
 //   npx vigile-scan --sentinel --duration 300   # Monitor for 5 minutes
 
-import { execSync, spawn, type ChildProcess } from 'child_process';
+import { execFileSync, spawn, type ChildProcess } from 'child_process';
 import type {
   NetworkEvent,
   SentinelFinding,
@@ -231,11 +231,11 @@ export class SentinelEngine {
 
   private detectMonitoringMethod(): 'lsof-poll' | 'ss-poll' | 'proxy' {
     try {
-      execSync('which lsof', { stdio: 'pipe' });
+      execFileSync('/usr/bin/which', ['lsof'], { stdio: 'pipe' });
       return 'lsof-poll';
     } catch {
       try {
-        execSync('which ss', { stdio: 'pipe' });
+        execFileSync('/usr/bin/which', ['ss'], { stdio: 'pipe' });
         return 'ss-poll';
       } catch {
         return 'proxy';
@@ -248,15 +248,25 @@ export class SentinelEngine {
    * This is the lowest-privilege method — no root needed.
    */
   private async startLsofPolling(): Promise<void> {
+    // Sanitize serverName to prevent injection — only allow safe chars
+    const safeName = this.serverName.replace(/[^a-zA-Z0-9._@/-]/g, '');
+
     const pollInterval = setInterval(() => {
       try {
-        // lsof -i -n -P lists internet connections with numeric hosts/ports
-        const output = execSync(
-          `lsof -i -n -P 2>/dev/null | grep -i "${this.serverName}" || true`,
-          { timeout: 5000, encoding: 'utf-8' }
-        );
+        // Use execFileSync to avoid shell injection. Pipe lsof through grep
+        // by running them separately.
+        const lsofOutput = execFileSync('/usr/sbin/lsof', ['-i', '-n', '-P'], {
+          timeout: 5000,
+          encoding: 'utf-8',
+          stdio: ['pipe', 'pipe', 'pipe'],
+        });
 
-        for (const line of output.split('\n').filter(Boolean)) {
+        // Filter in-process instead of piping through shell
+        const output = lsofOutput
+          .split('\n')
+          .filter(line => line.toLowerCase().includes(safeName.toLowerCase()));
+
+        for (const line of output.filter(Boolean)) {
           const event = this.parseLsofLine(line);
           if (event) this.ingestEvent(event);
         }
@@ -280,14 +290,22 @@ export class SentinelEngine {
    * Linux: Poll `ss` (socket statistics) for network connections.
    */
   private async startSsPolling(): Promise<void> {
+    const safeName = this.serverName.replace(/[^a-zA-Z0-9._@/-]/g, '');
+
     const pollInterval = setInterval(() => {
       try {
-        const output = execSync(
-          `ss -tnp 2>/dev/null | grep "${this.serverName}" || true`,
-          { timeout: 5000, encoding: 'utf-8' }
-        );
+        const ssOutput = execFileSync('/usr/sbin/ss', ['-tnp'], {
+          timeout: 5000,
+          encoding: 'utf-8',
+          stdio: ['pipe', 'pipe', 'pipe'],
+        });
 
-        for (const line of output.split('\n').filter(Boolean)) {
+        // Filter in-process instead of piping through shell
+        const lines = ssOutput
+          .split('\n')
+          .filter(line => line.includes(safeName));
+
+        for (const line of lines.filter(Boolean)) {
           const event = this.parseSsLine(line);
           if (event) this.ingestEvent(event);
         }
