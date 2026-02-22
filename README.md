@@ -11,11 +11,11 @@
 npx vigile-scan
 ```
 
-That's it. No install, no config. Vigile discovers your MCP server configurations and agent skill files, scans them against 46 detection patterns, and gives you a trust score for each one.
+That's it. No install, no config. Vigile discovers your MCP server configurations and agent skill files, scans them against 50 detection patterns, and gives you a trust score for each one.
 
 ## What It Detects
 
-### MCP Server Threats (19 patterns)
+### MCP Server Threats (23 patterns)
 
 | ID | Category | What It Catches |
 |----|----------|-----------------|
