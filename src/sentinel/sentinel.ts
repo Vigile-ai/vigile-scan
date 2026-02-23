@@ -19,6 +19,7 @@
 //   npx vigile-scan --sentinel --duration 300   # Monitor for 5 minutes
 
 import { execFileSync, spawn, type ChildProcess } from 'child_process';
+import { promises as dnsPromises } from 'dns';
 import type {
   NetworkEvent,
   SentinelFinding,
@@ -45,6 +46,8 @@ export class SentinelEngine {
   private serverName: string;
   private durationSeconds: number;
   private onEvent?: (event: NetworkEvent) => void;
+  /** DNS reverse-lookup cache: IP → hostname. Persists for the session. */
+  private dnsCache = new Map<string, string>();
 
   constructor(options: {
     serverName: string;
@@ -59,18 +62,21 @@ export class SentinelEngine {
   /**
    * Start monitoring network activity for the given MCP server.
    *
-   * The monitor works in three modes depending on the OS and permissions:
-   *   1. macOS: Uses `nettop` or `networksetup` + `tcpdump`
-   *   2. Linux: Uses `ss` polling + optional `tcpdump`
-   *   3. Fallback: Uses Node.js HTTP/HTTPS module monkey-patching
-   *      (only captures Node.js HTTP requests from the current process tree)
+   * The monitor works in four modes depending on the OS and permissions:
+   *   1. macOS: Uses `lsof -i` polling (no root required)
+   *   2. Linux: Uses `ss -tnp` polling (no root required)
+   *   3. Windows: Uses PowerShell `Get-NetTCPConnection` (no admin required)
+   *   4. Fallback: Stub — events must be fed manually via ingestEvent()
+   *
+   * All modes perform async reverse-DNS enrichment so that endpoint patterns
+   * (pastebin.com, ngrok.io, etc.) match against resolved hostnames rather
+   * than raw IPs.
    */
   async startMonitoring(): Promise<void> {
     this.startTime = Date.now();
     this.events = [];
     this.findings = [];
 
-    // Detect which monitoring method is available
     const method = this.detectMonitoringMethod();
 
     switch (method) {
@@ -79,6 +85,9 @@ export class SentinelEngine {
         break;
       case 'ss-poll':
         await this.startSsPolling();
+        break;
+      case 'netstat-poll':
+        await this.startNetstatPolling();
         break;
       case 'proxy':
         await this.startProxyCapture();
@@ -229,14 +238,25 @@ export class SentinelEngine {
 
   // ── Monitoring Methods ──
 
-  private detectMonitoringMethod(): 'lsof-poll' | 'ss-poll' | 'proxy' {
-    try {
-      execFileSync('/usr/bin/which', ['lsof'], { stdio: 'pipe' });
+  private detectMonitoringMethod(): 'lsof-poll' | 'ss-poll' | 'netstat-poll' | 'proxy' {
+    // Windows: PowerShell Get-NetTCPConnection is always available on Win 8+
+    if (process.platform === 'win32') {
+      return 'netstat-poll';
+    }
+
+    // macOS: lsof is always present — skip `which` probe entirely
+    if (process.platform === 'darwin') {
       return 'lsof-poll';
+    }
+
+    // Linux: prefer ss (iproute2), fall back to lsof
+    try {
+      execFileSync('which', ['ss'], { stdio: 'pipe' });
+      return 'ss-poll';
     } catch {
       try {
-        execFileSync('/usr/bin/which', ['ss'], { stdio: 'pipe' });
-        return 'ss-poll';
+        execFileSync('which', ['lsof'], { stdio: 'pipe' });
+        return 'lsof-poll';
       } catch {
         return 'proxy';
       }
@@ -244,83 +264,112 @@ export class SentinelEngine {
   }
 
   /**
-   * macOS/Linux: Poll `lsof` to capture network connections for a process.
-   * This is the lowest-privilege method — no root needed.
+   * macOS: Poll `lsof -i` to capture network connections.
+   * No root required. DNS-enriches IPs → hostnames before pattern matching.
    */
   private async startLsofPolling(): Promise<void> {
-    // Sanitize serverName to prevent injection — only allow safe chars
     const safeName = this.serverName.replace(/[^a-zA-Z0-9._@/-]/g, '');
 
-    const pollInterval = setInterval(() => {
+    const pollInterval = setInterval(async () => {
       try {
-        // Use execFileSync to avoid shell injection. Pipe lsof through grep
-        // by running them separately.
         const lsofOutput = execFileSync('/usr/sbin/lsof', ['-i', '-n', '-P'], {
           timeout: 5000,
           encoding: 'utf-8',
           stdio: ['pipe', 'pipe', 'pipe'],
         });
 
-        // Filter in-process instead of piping through shell
-        const output = lsofOutput
+        const lines = lsofOutput
           .split('\n')
-          .filter(line => line.toLowerCase().includes(safeName.toLowerCase()));
+          .filter(line => line.toLowerCase().includes(safeName.toLowerCase()))
+          .filter(Boolean);
 
-        for (const line of output.filter(Boolean)) {
-          const event = this.parseLsofLine(line);
-          if (event) this.ingestEvent(event);
-        }
+        // Parse all lines, then DNS-enrich all IPs in parallel before ingesting
+        const rawEvents = lines.map(l => this.parseLsofLine(l)).filter((e): e is NetworkEvent => e !== null);
+        const enriched = await Promise.all(rawEvents.map(e => this.enrichWithHostname(e)));
+        for (const event of enriched) this.ingestEvent(event);
       } catch {
         // lsof failed, continue
       }
-    }, 2000); // Poll every 2 seconds
+    }, 2000);
 
-    // Store cleanup handle
-    this.monitorProcess = {
-      kill: () => clearInterval(pollInterval),
-    } as unknown as ChildProcess;
-
-    // Auto-stop after duration
-    setTimeout(() => {
-      clearInterval(pollInterval);
-    }, this.durationSeconds * 1000);
+    this.monitorProcess = { kill: () => clearInterval(pollInterval) } as unknown as ChildProcess;
+    setTimeout(() => clearInterval(pollInterval), this.durationSeconds * 1000);
   }
 
   /**
-   * Linux: Poll `ss` (socket statistics) for network connections.
+   * Linux: Poll `ss -tnp` (socket statistics) for network connections.
+   * No root required. DNS-enriches IPs → hostnames before pattern matching.
    */
   private async startSsPolling(): Promise<void> {
     const safeName = this.serverName.replace(/[^a-zA-Z0-9._@/-]/g, '');
 
-    const pollInterval = setInterval(() => {
+    const pollInterval = setInterval(async () => {
       try {
-        const ssOutput = execFileSync('/usr/sbin/ss', ['-tnp'], {
+        const ssOutput = execFileSync('ss', ['-tnp'], {
           timeout: 5000,
           encoding: 'utf-8',
           stdio: ['pipe', 'pipe', 'pipe'],
         });
 
-        // Filter in-process instead of piping through shell
         const lines = ssOutput
           .split('\n')
-          .filter(line => line.includes(safeName));
+          .filter(line => line.includes(safeName))
+          .filter(Boolean);
 
-        for (const line of lines.filter(Boolean)) {
-          const event = this.parseSsLine(line);
-          if (event) this.ingestEvent(event);
-        }
+        const rawEvents = lines.map(l => this.parseSsLine(l)).filter((e): e is NetworkEvent => e !== null);
+        const enriched = await Promise.all(rawEvents.map(e => this.enrichWithHostname(e)));
+        for (const event of enriched) this.ingestEvent(event);
       } catch {
         // ss failed, continue
       }
     }, 2000);
 
-    this.monitorProcess = {
-      kill: () => clearInterval(pollInterval),
-    } as unknown as ChildProcess;
+    this.monitorProcess = { kill: () => clearInterval(pollInterval) } as unknown as ChildProcess;
+    setTimeout(() => clearInterval(pollInterval), this.durationSeconds * 1000);
+  }
 
-    setTimeout(() => {
-      clearInterval(pollInterval);
-    }, this.durationSeconds * 1000);
+  /**
+   * Windows: Poll PowerShell `Get-NetTCPConnection` for established connections.
+   * No admin required (available on Windows 8+ / Server 2012+).
+   * DNS-enriches IPs → hostnames so endpoint patterns match correctly.
+   *
+   * Note: Unlike lsof/ss, this captures ALL machine connections (not filtered
+   * by process name) because Windows process-to-connection mapping requires
+   * admin rights. Vigil's patterns handle the noise — it flags what matters.
+   */
+  private async startNetstatPolling(): Promise<void> {
+    // PowerShell command: get established external TCP connections as CSV
+    const psCommand =
+      `Get-NetTCPConnection -State Established | ` +
+      `Where-Object { $_.RemoteAddress -notmatch '^(127\\.|::1$|0\\.0\\.0\\.0$|::$)' } | ` +
+      `Select-Object LocalAddress,LocalPort,RemoteAddress,RemotePort | ` +
+      `ConvertTo-Csv -NoTypeInformation`;
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const output = execFileSync('powershell', [
+          '-NoProfile',
+          '-NonInteractive',
+          '-Command',
+          psCommand,
+        ], {
+          timeout: 8000, // PowerShell startup is slower than lsof
+          encoding: 'utf-8',
+          stdio: ['pipe', 'pipe', 'pipe'],
+        });
+
+        // CSV rows: skip header, parse each line
+        const lines = output.split('\n').slice(1).map(l => l.trim()).filter(Boolean);
+        const rawEvents = lines.map(l => this.parsePowerShellLine(l)).filter((e): e is NetworkEvent => e !== null);
+        const enriched = await Promise.all(rawEvents.map(e => this.enrichWithHostname(e)));
+        for (const event of enriched) this.ingestEvent(event);
+      } catch {
+        // PowerShell failed or unavailable
+      }
+    }, 3000); // 3s interval — PS startup adds ~1-2s overhead
+
+    this.monitorProcess = { kill: () => clearInterval(pollInterval) } as unknown as ChildProcess;
+    setTimeout(() => clearInterval(pollInterval), this.durationSeconds * 1000);
   }
 
   /**
@@ -378,6 +427,83 @@ export class SentinelEngine {
       port: parseInt(remotePort, 10),
       requestSize: parseInt(sendQueue, 10),
       tls: parseInt(remotePort, 10) === 443,
+    };
+  }
+
+  /**
+   * Windows: Parse a CSV row from PowerShell `Get-NetTCPConnection | ConvertTo-Csv`.
+   * Format: "LocalAddress","LocalPort","RemoteAddress","RemotePort"
+   * Example: "192.168.1.5","54123","172.64.155.209","443"
+   */
+  private parsePowerShellLine(line: string): NetworkEvent | null {
+    // CSV values may be quoted or unquoted depending on PS version
+    const match = line.match(/^"?([^",]+)"?,"\d+","?([^",]+)"?,"?(\d+)"?/);
+    if (!match) return null;
+
+    const [, , remoteAddress, remotePort] = match;
+    const port = parseInt(remotePort, 10);
+
+    // Skip RFC-1918 private addresses and loopback (already filtered by PS
+    // but guard here in case the regex misses edge cases)
+    if (
+      remoteAddress === '127.0.0.1' ||
+      remoteAddress === '::1' ||
+      remoteAddress.startsWith('10.') ||
+      remoteAddress.startsWith('192.168.') ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(remoteAddress)
+    ) {
+      return null;
+    }
+
+    return {
+      timestamp: Date.now(),
+      serverName: this.serverName,
+      method: 'TCP',
+      url: `https://${remoteAddress}:${remotePort}/`,
+      destinationIp: remoteAddress,
+      port,
+      requestSize: 0,
+      tls: port === 443,
+    };
+  }
+
+  // ── DNS Enrichment ──
+
+  /**
+   * Reverse-DNS lookup with a session-scoped cache.
+   * Returns the first PTR record if available, otherwise the raw IP.
+   *
+   * WHY this matters: Sentinel's endpoint patterns match against known-bad
+   * hostnames (pastebin.com, ngrok.io, etc.). Without DNS enrichment, lsof/ss/
+   * netstat all return raw IPs and those patterns would silently miss every hit.
+   */
+  private async resolveIp(ip: string): Promise<string> {
+    const cached = this.dnsCache.get(ip);
+    if (cached !== undefined) return cached;
+
+    try {
+      const hostnames = await dnsPromises.reverse(ip);
+      const hostname = hostnames[0] ?? ip;
+      this.dnsCache.set(ip, hostname);
+      return hostname;
+    } catch {
+      // Reverse DNS failed (common for CDN IPs) — fall back to raw IP
+      this.dnsCache.set(ip, ip);
+      return ip;
+    }
+  }
+
+  /**
+   * Enrich a NetworkEvent's url field with a resolved hostname.
+   * Returns a new event object (does not mutate the original).
+   */
+  private async enrichWithHostname(event: NetworkEvent): Promise<NetworkEvent> {
+    if (!event.destinationIp) return event;
+    const hostname = await this.resolveIp(event.destinationIp);
+    if (hostname === event.destinationIp) return event; // No change
+    return {
+      ...event,
+      url: `https://${hostname}:${event.port}/`,
     };
   }
 }
