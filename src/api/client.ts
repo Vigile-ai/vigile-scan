@@ -113,13 +113,13 @@ export class VigileApiClient {
     try {
       const u = new URL(rawUrl);
       if (u.protocol !== 'https:' && u.hostname !== 'localhost' && u.hostname !== '127.0.0.1') {
-        console.error(`[vigile] API URL must use HTTPS. Got: ${u.protocol} — falling back to default`);
+        console.error(`[vigile] API URL must use HTTPS — falling back to default`);
         this.baseUrl = DEFAULT_API_URL;
       } else {
         this.baseUrl = rawUrl;
       }
     } catch {
-      console.error(`[vigile] Invalid API URL: ${rawUrl} — falling back to default`);
+      console.error(`[vigile] Invalid API URL — falling back to default`);
       this.baseUrl = DEFAULT_API_URL;
     }
     this.token = token || null;

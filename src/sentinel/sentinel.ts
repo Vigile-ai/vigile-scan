@@ -268,7 +268,7 @@ export class SentinelEngine {
    * No root required. DNS-enriches IPs → hostnames before pattern matching.
    */
   private async startLsofPolling(): Promise<void> {
-    const safeName = this.serverName.replace(/[^a-zA-Z0-9._@/-]/g, '');
+    const safeName = this.serverName.replace(/[^a-zA-Z0-9._-]/g, '');
 
     const pollInterval = setInterval(async () => {
       try {
@@ -301,7 +301,7 @@ export class SentinelEngine {
    * No root required. DNS-enriches IPs → hostnames before pattern matching.
    */
   private async startSsPolling(): Promise<void> {
-    const safeName = this.serverName.replace(/[^a-zA-Z0-9._@/-]/g, '');
+    const safeName = this.serverName.replace(/[^a-zA-Z0-9._-]/g, '');
 
     const pollInterval = setInterval(async () => {
       try {
