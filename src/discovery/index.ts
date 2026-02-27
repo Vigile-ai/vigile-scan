@@ -9,6 +9,7 @@ import { discoverCursor } from './cursor.js';
 import { discoverClaudeCode } from './claude-code.js';
 import { discoverWindsurf } from './windsurf.js';
 import { discoverVSCode } from './vscode.js';
+import { discoverOpenClaw } from './openclaw.js';
 import type { MCPServerEntry, MCPClient } from '../types/index.js';
 
 // Re-export skill discovery for use in CLI
@@ -37,6 +38,7 @@ export async function discoverAllServers(
     { client: 'claude-code', fn: discoverClaudeCode },
     { client: 'windsurf', fn: discoverWindsurf },
     { client: 'vscode', fn: discoverVSCode },
+    { client: 'openclaw', fn: discoverOpenClaw },
   ];
 
   // Filter to specific client if requested

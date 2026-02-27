@@ -50,7 +50,9 @@ import type {
   UploadSummary,
 } from './types/index.js';
 
-const VERSION = '0.2.0';
+// Read version dynamically so it never goes stale.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const VERSION: string = require('../package.json').version;
 
 const program = new Command();
 
@@ -70,7 +72,7 @@ function addScanOptions(cmd: Command): Command {
     .option('-o, --output <path>', 'Write results to a file')
     .option(
       '--client <client>',
-      'Only scan a specific client (claude-desktop, cursor, claude-code, windsurf, vscode)',
+      'Only scan a specific client (claude-desktop, cursor, claude-code, windsurf, vscode, openclaw)',
     )
     .option('-s, --skills', 'Scan agent skills only (SKILL.md, .mdc rules, CLAUDE.md, etc.)')
     .option('-a, --all', 'Scan both MCP servers and agent skills')
@@ -268,7 +270,13 @@ async function runScan(options: ScanOptions): Promise<void> {
     if (options.output) {
       await writeFile(options.output, jsonOutput);
     } else {
-      console.log(jsonOutput);
+      // Write JSON and wait for stdout to drain — prevents truncation
+      // when piped (stdout is async for pipes, sync for TTYs/files)
+      await new Promise<void>((resolve, reject) => {
+        const ok = process.stdout.write(jsonOutput + '\n');
+        if (ok) resolve();
+        else process.stdout.once('drain', resolve);
+      });
     }
   } else {
     console.log('');
@@ -307,6 +315,15 @@ async function runScan(options: ScanOptions): Promise<void> {
 
   // ── Exit with appropriate code ──
   if (summary.bySeverity.critical > 0 || summary.bySeverity.high > 0) {
+    // Wait for stdout to drain before exiting — prevents truncation
+    // when output is piped (stdout is async for pipes, not TTYs)
+    await new Promise<void>((resolve) => {
+      if (process.stdout.writableNeedDrain) {
+        process.stdout.once('drain', resolve);
+      } else {
+        resolve();
+      }
+    });
     process.exit(1);
   }
 }

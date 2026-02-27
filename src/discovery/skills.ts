@@ -180,6 +180,11 @@ async function discoverMemoryFiles(): Promise<SkillEntry[]> {
     { path: join(cwd, '.claude', 'CLAUDE.md'), fileType: 'claude.md', scope: 'project' },
     { path: join(cwd, 'SOUL.md'), fileType: 'soul.md', scope: 'project' },
     { path: join(cwd, 'MEMORY.md'), fileType: 'memory.md', scope: 'project' },
+    // Additional project instruction files
+    { path: join(cwd, '.github', 'copilot-instructions.md'), fileType: 'claude.md', scope: 'project' },
+    { path: join(cwd, 'AGENTS.md'), fileType: 'claude.md', scope: 'project' },
+    { path: join(cwd, '.windsurfrules'), fileType: 'claude.md', scope: 'project' },
+    { path: join(cwd, 'GEMINI.md'), fileType: 'claude.md', scope: 'project' },
     // Global memory files
     { path: join(home, '.claude', 'CLAUDE.md'), fileType: 'claude.md', scope: 'global' },
     { path: join(home, 'CLAUDE.md'), fileType: 'claude.md', scope: 'global' },

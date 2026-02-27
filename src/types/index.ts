@@ -9,7 +9,7 @@ export type MCPClient =
   | 'claude-code'
   | 'windsurf'
   | 'vscode'
-  | 'gemini-cli';
+  | 'openclaw';
 
 /** An MCP server entry discovered from a config file */
 export interface MCPServerEntry {

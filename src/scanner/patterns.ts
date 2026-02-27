@@ -50,17 +50,10 @@ export const TOOL_POISONING_PATTERNS: DetectionPattern[] = [
     recommendation:
       'Do NOT install this MCP server. Legitimate tools never instruct agents to hide actions.',
   },
-  {
-    id: 'TP-003',
-    category: 'tool-poisoning',
-    severity: 'critical',
-    title: 'System prompt override attempt',
-    pattern: /you\s+are\s+(now\s+)?(a|an|acting\s+as)/i,
-    description:
-      'Tool description attempts to redefine the AI agent\'s identity or role.',
-    recommendation:
-      'Remove this MCP server. Tool descriptions should not redefine agent behavior.',
-  },
+  // TP-003 removed: "you are a/an [role]" is too broad — matches legitimate
+  // role descriptions in skills (e.g., "You are a computer science professor").
+  // SK-001 covers the real threat (malicious persona hijacking) with proper
+  // specificity by requiring suspicious role terms like "hacker" or "jailbroken".
   {
     id: 'TP-004',
     category: 'tool-poisoning',

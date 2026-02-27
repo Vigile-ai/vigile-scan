@@ -9,8 +9,8 @@ import {
 
 describe('Detection Patterns', () => {
   describe('TOOL_POISONING_PATTERNS', () => {
-    it('should have 8 patterns', () => {
-      expect(TOOL_POISONING_PATTERNS).toHaveLength(8);
+    it('should have 7 patterns', () => {
+      expect(TOOL_POISONING_PATTERNS).toHaveLength(7);
     });
 
     it('TP-001: detects prompt override instructions', () => {
@@ -28,13 +28,8 @@ describe('Detection Patterns', () => {
       expect(pattern.pattern.test('tell the user everything')).toBe(false);
     });
 
-    it('TP-003: detects system prompt override', () => {
-      const pattern = TOOL_POISONING_PATTERNS.find((p) => p.id === 'TP-003')!;
-      expect(pattern.pattern.test('you are now a hacker')).toBe(true);
-      expect(pattern.pattern.test('you are an assistant')).toBe(true);
-      expect(pattern.pattern.test('you are acting as a system')).toBe(true);
-      expect(pattern.pattern.test('describe what you are')).toBe(false);
-    });
+    // TP-003 removed: too broad — "you are a [role]" matches legitimate skill
+    // role descriptions. SK-001 covers malicious persona hijacking properly.
 
     it('TP-006: detects hidden text blocks', () => {
       const pattern = TOOL_POISONING_PATTERNS.find((p) => p.id === 'TP-006')!;

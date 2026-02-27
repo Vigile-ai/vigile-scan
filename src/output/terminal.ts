@@ -237,6 +237,7 @@ export function printNoServersFound(): void {
   console.log(chalk.gray('    • Claude Code config (.claude.json / .mcp.json)'));
   console.log(chalk.gray('    • Windsurf MCP config'));
   console.log(chalk.gray('    • VS Code MCP config (.vscode/mcp.json)'));
+  console.log(chalk.gray('    • OpenClaw config (~/.openclaw/openclaw.json)'));
   console.log('');
   console.log(chalk.gray('  If you have MCP servers configured elsewhere, use:'));
   console.log(chalk.cyan('    vigile-scan --config /path/to/config.json'));

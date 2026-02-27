@@ -46,8 +46,8 @@ export async function parseMCPConfig(
     const raw = await readFile(configPath, 'utf-8');
     const config = JSON.parse(raw);
 
-    // Handle both { mcpServers: {...} } and direct server configs
-    const servers = config.mcpServers || config;
+    // Handle { mcpServers: {...} }, { servers: {...} } (VS Code), and direct configs
+    const servers = config.mcpServers || config.servers || config;
 
     if (typeof servers !== 'object' || servers === null) {
       return [];

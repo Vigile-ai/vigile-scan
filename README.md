@@ -11,30 +11,30 @@
 npx vigile-scan
 ```
 
-That's it. No install, no config. Vigile discovers your MCP server configurations and agent skill files, scans them against 50 detection patterns, and gives you a trust score for each one.
+That's it. No install, no config. Vigile discovers your MCP server configurations and agent skill files, scans them against 54 detection rules, and gives you a trust score for each one.
 
 ## What It Detects
 
-### MCP Server Threats (23 patterns)
+### MCP Server Threats (22 patterns + 5 inline checks)
 
 | ID | Category | What It Catches |
 |----|----------|-----------------|
-| TP-001–005 | Tool Poisoning | Hidden instructions in tool descriptions, cross-tool manipulation, schema deception |
-| PE-001–004 | Permission & Escalation | Excessive filesystem/network access, privilege escalation, security bypass flags |
-| OB-001–002 | Obfuscation | Base64-encoded payloads, character encoding tricks |
-| DA-001–004 | Data & Access | Environment variable exposure, credential patterns, data exfiltration URLs |
-| — | Supply Chain | Typosquatting detection, known malicious packages, auto-install without confirmation |
+| TP-001–008 | Tool Poisoning | Prompt overrides, hidden manipulation, cross-tool injection, whitespace hiding, system prompt references, secrecy directives |
+| EX-001–007 | Data Exfiltration | SSH key access, AWS credentials, .env files, credential files, suspicious URLs, crypto wallet access, browser data |
+| PM-001–004 | Permission Abuse | Code execution (eval/spawn), unrestricted filesystem, network requests, sensitive path access |
+| OB-001–004 | Obfuscation | Base64 content, zero-width Unicode, hex-encoded strings, Unicode escapes |
+| EV/AR/CM | Inline Checks | Sensitive env vars, security bypass flags, sensitive directory args, auto-install (npx -y), typosquatting |
 
 ### Agent Skill Threats (27 patterns)
 
 | ID | Category | What It Catches |
 |----|----------|-----------------|
-| SK-001–005 | Instruction Injection | Hidden instructions, prompt override, role manipulation, context poisoning |
-| SK-006–010 | Data Exfiltration | Credential harvesting, file theft, clipboard spying, keylogging instructions |
-| SK-011–014 | Malware Delivery | Encoded payloads piped to shell, fake prerequisites, persistence mechanisms |
-| SK-015–018 | Privilege Abuse | Force flags, sudo escalation, security tool disabling, anti-forensics |
-| SK-019–022 | Social Engineering | Fake error messages, urgency/fear tactics, impersonation, deceptive naming |
-| SK-023–027 | Cross-Skill Attacks | Skill file tampering, scope creep, resource abuse, shadow dependencies |
+| SK-001–006 | Instruction Injection | Role hijacking, instruction override, hidden markdown instructions, conditional triggers, cross-skill poisoning, invisible Unicode |
+| SK-010–014 | Malware Delivery | Remote script piping, reverse shells, suspicious install prerequisites, encoded payloads, typosquatted packages |
+| SK-020–023 | Stealth Operations | Silent action directives, output suppression, history/log evasion, deceptive user responses |
+| SK-030–033 | Safety Bypass | Confirmation bypass, safety feature disable, force flags, root/sudo escalation |
+| SK-040–043 | Persistence Abuse | Startup file modification, memory file tampering, cron jobs, git hook injection |
+| SK-050–053 | Data Exfiltration | Credential harvesting, URL-based exfiltration, filesystem enumeration, env var dumping |
 
 ## Platforms
 
@@ -43,9 +43,10 @@ Vigile auto-discovers configurations from:
 - **Claude Desktop** — `claude_desktop_config.json`
 - **Claude Code** — `CLAUDE.md`, `.claude/` skill files
 - **Cursor** — `.cursor/rules/*.mdc`, `.cursorrules`
-- **GitHub Copilot** — `.github/copilot/**/*.md`
-- **Windsurf** — `windsurf.json`
-- **VS Code** — MCP config in settings
+- **GitHub Copilot** — `.github/copilot/**/*.md`, `copilot-instructions.md`
+- **Windsurf** — `windsurf.json`, `.windsurfrules`
+- **VS Code** — `.vscode/mcp.json`
+- **OpenClaw** — `~/.openclaw/openclaw.json`, `openclaw.config.json`
 
 ## Usage
 
@@ -64,7 +65,7 @@ vigile-scan [options]
 | `-v, --verbose` | Show detailed findings and score breakdown |
 | `-c, --config <path>` | Path to a custom MCP config file |
 | `-o, --output <path>` | Write results to a file |
-| `--client <name>` | Only scan a specific client (claude-desktop, cursor, claude-code, windsurf, vscode) |
+| `--client <name>` | Only scan a specific client (claude-desktop, cursor, claude-code, windsurf, vscode, openclaw) |
 | `--no-upload` | Skip uploading scan results to Vigile API |
 
 ### Sentinel Runtime Monitoring (Pro)
