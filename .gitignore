@@ -7,6 +7,7 @@ dist/
 # Environment variables
 .env
 .env.local
+.env.e2e
 
 # IDE
 .vscode/
@@ -20,6 +21,9 @@ Thumbs.db
 
 # Bundler artifacts
 *.bundled_*.mjs
+
+# E2E test infrastructure (private test targets and recipes)
+tests/e2e/
 
 # Logs
 *.log

@@ -40,6 +40,7 @@ import {
 } from './output/terminal.js';
 import { formatJSON } from './output/json.js';
 import { getAuthenticatedClient, authLogin, authStatus, authLogout } from './api/auth.js';
+import { scanVibeApp, scanSupabase, scanFirebase } from './scanner/baas/index.js';
 import type { VigileApiClient } from './api/client.js';
 import type {
   ScanOptions,
@@ -79,7 +80,11 @@ function addScanOptions(cmd: Command): Command {
     .option('--sentinel', 'Enable Sentinel runtime monitoring (Pro+ feature)')
     .option('--sentinel-server <name>', 'Monitor a specific MCP server by name')
     .option('--sentinel-duration <seconds>', 'Monitoring duration in seconds (default: 120)', parseInt)
-    .option('--no-upload', 'Skip uploading scan results to Vigile API');
+    .option('--no-upload', 'Skip uploading scan results to Vigile API')
+    .option('--supabase <url>', 'Scan a Supabase project URL for RLS issues and exposed keys')
+    .option('--supabase-key <key>', 'Supabase anon key (auto-detected from bundles if omitted)')
+    .option('--firebase <url>', 'Scan a Firebase project URL for rules issues and exposed keys')
+    .option('--app <url>', 'Scan a deployed web app for exposed secrets and BaaS misconfigs');
 }
 
 addScanOptions(
@@ -313,6 +318,11 @@ async function runScan(options: ScanOptions): Promise<void> {
     await runSentinel(options, results, isJSON);
   }
 
+  // ── Step 6: BaaS Scanning (if --supabase / --firebase / --app) ──
+  if (options.supabase || options.firebase || options.app) {
+    await runBaaSScan(options, isJSON);
+  }
+
   // ── Exit with appropriate code ──
   if (summary.bySeverity.critical > 0 || summary.bySeverity.high > 0) {
     // Wait for stdout to drain before exiting — prevents truncation
@@ -398,6 +408,113 @@ async function uploadResults(
 
   if (!isJSON) {
     printUploadSuccess(summary);
+  }
+}
+
+// ============================================================
+// BaaS Scan Flow — Supabase / Firebase / deployed app scanning
+// ============================================================
+
+/**
+ * Runs BaaS security scanning for any --supabase, --firebase,
+ * or --app URLs provided as CLI flags.
+ *
+ * Prints findings inline and exits with code 1 if critical/high
+ * findings are discovered (same contract as MCP scan).
+ */
+async function runBaaSScan(options: ScanOptions, isJSON: boolean): Promise<void> {
+  const spinner = isJSON ? null : ora('Running BaaS security scan...').start();
+
+  let totalFindings = 0;
+  let criticalOrHigh = 0;
+
+  // ── Supabase scan ──
+  if (options.supabase) {
+    const result = await scanSupabase({
+      projectUrl: options.supabase,
+      anonKey: options.supabaseKey,
+    });
+    totalFindings += result.findings.length;
+    criticalOrHigh += result.findings.filter(
+      (f) => f.severity === 'critical' || f.severity === 'high',
+    ).length;
+
+    if (!isJSON) {
+      spinner?.stop();
+      console.log(chalk.bold(`\n  Supabase: ${options.supabase}`));
+      if (result.errors.length > 0) {
+        result.errors.forEach((e) => console.log(chalk.yellow(`  ⚠  ${e}`)));
+      }
+      result.findings.forEach((f) => {
+        const color =
+          f.severity === 'critical' ? chalk.red : f.severity === 'high' ? chalk.yellow : chalk.gray;
+        console.log(color(`  [${f.severity.toUpperCase()}] ${f.title}`));
+        if (options.verbose) console.log(chalk.gray(`    ${f.description}`));
+      });
+    }
+  }
+
+  // ── Firebase scan ──
+  if (options.firebase) {
+    const result = await scanFirebase({ projectUrl: options.firebase });
+    totalFindings += result.findings.length;
+    criticalOrHigh += result.findings.filter(
+      (f) => f.severity === 'critical' || f.severity === 'high',
+    ).length;
+
+    if (!isJSON) {
+      spinner?.stop();
+      console.log(chalk.bold(`\n  Firebase: ${options.firebase}`));
+      if (result.errors.length > 0) {
+        result.errors.forEach((e) => console.log(chalk.yellow(`  ⚠  ${e}`)));
+      }
+      result.findings.forEach((f) => {
+        const color =
+          f.severity === 'critical' ? chalk.red : f.severity === 'high' ? chalk.yellow : chalk.gray;
+        console.log(color(`  [${f.severity.toUpperCase()}] ${f.title}`));
+        if (options.verbose) console.log(chalk.gray(`    ${f.description}`));
+      });
+    }
+  }
+
+  // ── Web app scan (bundle analysis + platform detection) ──
+  if (options.app) {
+    const result = await scanVibeApp({ appUrl: options.app });
+    totalFindings += result.findings.length;
+    criticalOrHigh += result.findings.filter(
+      (f) => f.severity === 'critical' || f.severity === 'high',
+    ).length;
+
+    if (!isJSON) {
+      spinner?.stop();
+      console.log(chalk.bold(`\n  App: ${options.app}`));
+      console.log(chalk.gray(`  Platform detected: ${result.detectedPlatform}`));
+      console.log(chalk.gray(`  Bundles analyzed: ${result.bundlesAnalyzed}`));
+      if (result.errors.length > 0) {
+        result.errors.forEach((e) => console.log(chalk.yellow(`  ⚠  ${e}`)));
+      }
+      result.findings.forEach((f) => {
+        const color =
+          f.severity === 'critical' ? chalk.red : f.severity === 'high' ? chalk.yellow : chalk.gray;
+        console.log(color(`  [${f.severity.toUpperCase()}] ${f.title}`));
+        if (options.verbose) {
+          console.log(chalk.gray(`    ${f.description}`));
+          if (f.evidence) console.log(chalk.gray(`    Evidence: ${f.evidence}`));
+        }
+      });
+    }
+  }
+
+  if (!isJSON) {
+    console.log('');
+    if (totalFindings === 0) {
+      console.log(chalk.green('  BaaS scan complete — no secrets or misconfigurations found'));
+    } else {
+      console.log(
+        chalk.yellow(`  BaaS scan complete — ${totalFindings} finding(s), ${criticalOrHigh} critical/high`),
+      );
+    }
+    console.log('');
   }
 }
 

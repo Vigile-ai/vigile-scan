@@ -47,7 +47,14 @@ export type FindingCategory =
   | 'c2-beaconing'
   | 'dns-tunneling'
   | 'covert-channel'
-  | 'phone-home';
+  | 'phone-home'
+  // BaaS scanning categories
+  | 'exposed-secret'
+  | 'rls-misconfiguration'
+  | 'firebase-rules-issue'
+  | 'cve-detected'
+  | 'cors-misconfiguration'
+  | 'auth-misconfiguration';
 
 /** A single security finding from scanning */
 export interface Finding {
@@ -144,6 +151,12 @@ export interface ScanOptions {
   sentinelDuration?: number;
   /** Skip uploading scan results to Vigile API */
   noUpload?: boolean;
+  /** Supabase project URL to scan for RLS issues and exposed keys */
+  supabase?: string;
+  /** Firebase project URL to scan for rules issues and exposed keys */
+  firebase?: string;
+  /** Deployed web app URL to scan for exposed secrets and BaaS misconfigs */
+  app?: string;
 }
 
 // ============================================================

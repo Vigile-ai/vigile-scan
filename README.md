@@ -173,8 +173,8 @@ Sentinel is available on Pro ($9.99/mo) and Pro+ ($29.99/mo) plans. Free users c
 ## Links
 
 - **Web Scanner & Registry** — [vigile.dev](https://vigile.dev)
-- **GitHub** — [github.com/Vigile-ai/vigile-cli](https://github.com/Vigile-ai/vigile-cli)
-- **Report Issues** — [github.com/Vigile-ai/vigile-cli/issues](https://github.com/Vigile-ai/vigile-cli/issues)
+- **GitHub** — [github.com/Vigile-ai/vigile-scan](https://github.com/Vigile-ai/vigile-scan)
+- **Report Issues** — [github.com/Vigile-ai/vigile-scan/issues](https://github.com/Vigile-ai/vigile-scan/issues)
 
 ## License
 
