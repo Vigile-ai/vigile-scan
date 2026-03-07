@@ -160,15 +160,15 @@ When you run `--sentinel`, Vigile intercepts outbound network traffic from your 
 - **DNS tunneling** — data exfiltration hidden in DNS queries
 - **Unexpected destinations** — connections to IPs/domains outside the expected set
 
-Sentinel is available on Pro ($29/mo) and Pro+ ($99/mo) plans. Free users can run static scans with no limits.
+Sentinel is available on Pro ($30/mo) and Pro+ ($100/mo) plans. Free users can run static scans with no limits.
 
 ## Pricing
 
 | Tier | Price | Highlights |
 |------|-------|------------|
 | Free | $0/forever | Unlimited CLI scans, 50 API scans/month, registry browsing |
-| Pro | $29/mo | Sentinel monitoring (5 min, 3 servers), 1,000 API scans |
-| Pro+ | $99/mo | Sentinel (30 min, 10 servers), DNS tunneling & C2 detection, alerts |
+| Pro | $30/mo | Sentinel monitoring (5 min, 3 servers), 1,000 API scans |
+| Pro+ | $100/mo | Sentinel (30 min, 10 servers), DNS tunneling & C2 detection, alerts |
 
 ## Links
 

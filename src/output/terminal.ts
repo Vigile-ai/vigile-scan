@@ -365,8 +365,8 @@ export function printSentinelUpgrade(): void {
   console.log(chalk.yellow(`  ⚡ Sentinel is a Pro feature. Upgrade to unlock runtime monitoring:`));
   console.log(chalk.cyan(`     https://vigile.dev/pricing`));
   console.log('');
-  console.log(chalk.gray(`  Pro ($29/mo)        — 5-min sessions, 3 servers, behavioral detection`));
-  console.log(chalk.gray(`  Pro+ ($99/mo)      — 30-min sessions, 10 servers, DNS tunneling & C2 detection`));
+  console.log(chalk.gray(`  Pro ($30/mo)        — 5-min sessions, 3 servers, behavioral detection`));
+  console.log(chalk.gray(`  Pro+ ($100/mo)     — 30-min sessions, 10 servers, DNS tunneling & C2 detection`));
   console.log('');
 }
 
