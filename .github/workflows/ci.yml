@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  test-and-build:
+  build-test-audit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,10 +17,16 @@ jobs:
           node-version: "20"
 
       - name: Install dependencies
-        run: rm -f package-lock.json && npm install
-
-      - name: Run tests
-        run: npx vitest run
+        run: npm ci
 
       - name: Build
         run: npm run build
+
+      - name: Run tests
+        run: npm test
+
+      - name: Security audit (production deps)
+        run: npm audit --omit=dev --audit-level=moderate
+
+      - name: Smoke test (verify CLI runs)
+        run: node dist/index.js --version

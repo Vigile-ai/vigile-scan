@@ -21,7 +21,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "prepublishOnly": "npm run build"
+    "audit:check": "npm audit --omit=dev --audit-level=moderate",
+    "audit:all": "npm audit --audit-level=moderate",
+    "preversion": "npm run build && npm test && npm run audit:check",
+    "prepublishOnly": "npm run build && npm test && npm run audit:check"
   },
   "keywords": [
     "mcp",
