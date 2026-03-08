@@ -366,6 +366,72 @@ export const SKILL_EXFILTRATION_PATTERNS: DetectionPattern[] = [
   },
 ];
 
+// ──────────────────────────────────────────────────────────
+// LOCATION PRIVACY PATTERNS
+// Detect skills that access device geolocation, location
+// APIs, or attempt to exfiltrate location data. Part of
+// Vigile Location Guard — the trust layer for physical-world
+// AI agent interactions.
+// ──────────────────────────────────────────────────────────
+
+export const LOCATION_PATTERNS: DetectionPattern[] = [
+  {
+    id: 'SK-060',
+    category: 'location-privacy',
+    severity: 'high',
+    title: 'Browser geolocation access',
+    pattern: /(?:navigator\s*\.\s*geolocation|getCurrentPosition|watchPosition|GeolocationPosition|geolocation\s*\.\s*(?:get|watch|clear))/i,
+    description:
+      'Skill accesses browser geolocation API, which reveals the user\'s precise physical location.',
+    recommendation:
+      'Verify this skill genuinely needs location data. Geolocation exposes latitude/longitude — high privacy risk if exfiltrated.',
+  },
+  {
+    id: 'SK-061',
+    category: 'location-privacy',
+    severity: 'high',
+    title: 'Mobile/native geolocation library',
+    pattern: /(?:@react-native-community\/geolocation|expo-location|react-native-geolocation|Geolocation\.requestAuthorization|CLLocationManager|LocationManager|FusedLocationProvider|ACCESS_FINE_LOCATION|ACCESS_COARSE_LOCATION|requestLocationPermission)/i,
+    description:
+      'Skill uses a native mobile geolocation library to access device GPS coordinates.',
+    recommendation:
+      'Mobile location APIs provide high-precision GPS data. Ensure this skill has a legitimate need for physical location and does not transmit it externally.',
+  },
+  {
+    id: 'SK-062',
+    category: 'location-privacy',
+    severity: 'critical',
+    title: 'Location data exfiltration',
+    pattern: /(?:(?:send|post|upload|transmit|exfiltrate|forward|share|log|track|record)\s+(?:the\s+)?(?:user(?:'s)?\s+)?(?:location|coordinates?|gps|lat(?:itude)?|lng|lon(?:gitude)?|geo(?:location)?|position|whereabouts))|(?:(?:location|coordinates?|gps|lat(?:itude)?|lng|lon(?:gitude)?|geo(?:location)?|position)\s+(?:to|via|through|using)\s+(?:https?|api|endpoint|server|webhook|url))/i,
+    description:
+      'Skill instructs the agent to send location data to an external endpoint. This is a location exfiltration pattern.',
+    recommendation:
+      'CRITICAL: Do NOT install. This skill attempts to exfiltrate physical location data — a severe privacy violation.',
+  },
+  {
+    id: 'SK-063',
+    category: 'location-privacy',
+    severity: 'medium',
+    title: 'IP-based geolocation lookup',
+    pattern: /(?:ip-api\.com|ipinfo\.io|ipgeolocation|ip2location|geoip|maxmind|freegeoip|geolite|ip\s*(?:to|2)\s*(?:geo|location))|(?:(?:get|fetch|lookup|resolve)\s+(?:the\s+)?(?:user(?:'s)?\s+)?(?:location|city|country|region|timezone)\s+(?:from|via|using)\s+(?:ip|IP))/i,
+    description:
+      'Skill performs IP-based geolocation to approximate the user\'s physical location without explicit GPS access.',
+    recommendation:
+      'IP geolocation bypasses browser permission prompts. Verify this skill needs approximate location and isn\'t using it to fingerprint or track users.',
+  },
+  {
+    id: 'SK-064',
+    category: 'location-privacy',
+    severity: 'medium',
+    title: 'Geofencing or location boundary check',
+    pattern: /(?:geofenc(?:e|ing)|location\s*(?:boundary|fence|perimeter|zone|radius|range)|within\s+(?:\d+\s*)?(?:meters?|miles?|km|kilometers?)\s+of|haversine|vincenty|h3\s*(?:cell|index|resolution|boundary)|(?:enter|exit|cross)(?:ing|ed)?\s+(?:the\s+)?(?:geo)?fence)/i,
+    description:
+      'Skill implements geofencing or location boundary detection, which requires continuous location monitoring.',
+    recommendation:
+      'Geofencing requires persistent location tracking. Review whether the boundary checks are appropriate and data isn\'t being logged or exfiltrated.',
+  },
+];
+
 /** All skill-specific detection patterns combined */
 export const ALL_SKILL_PATTERNS: DetectionPattern[] = [
   ...INSTRUCTION_INJECTION_PATTERNS,
@@ -374,4 +440,5 @@ export const ALL_SKILL_PATTERNS: DetectionPattern[] = [
   ...SAFETY_BYPASS_PATTERNS,
   ...PERSISTENCE_PATTERNS,
   ...SKILL_EXFILTRATION_PATTERNS,
+  ...LOCATION_PATTERNS,
 ];
