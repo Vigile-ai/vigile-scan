@@ -82,6 +82,7 @@ export const INSTRUCTION_INJECTION_PATTERNS: DetectionPattern[] = [
     category: 'instruction-injection',
     severity: 'medium',
     title: 'Invisible unicode directives',
+    // eslint-disable-next-line no-misleading-character-class -- intentional: detecting invisible unicode clusters
     pattern: /[\u200B\u200C\u200D\uFEFF\u2060-\u2064\u00AD]{3,}/,
     description:
       'Skill file contains clusters of invisible Unicode characters that may hide instructions from visual review.',

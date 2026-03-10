@@ -11,7 +11,7 @@
 npx vigile-scan
 ```
 
-That's it. No install, no config. Vigile discovers your MCP server configurations and agent skill files, scans them against 54 detection rules, and gives you a trust score for each one.
+That's it. No install, no config. Vigile discovers your MCP server configurations and agent skill files, scans them against 59 detection rules, and gives you a trust score for each one.
 
 ## What It Detects
 
@@ -25,7 +25,7 @@ That's it. No install, no config. Vigile discovers your MCP server configuration
 | OB-001–004 | Obfuscation | Base64 content, zero-width Unicode, hex-encoded strings, Unicode escapes |
 | EV/AR/CM | Inline Checks | Sensitive env vars, security bypass flags, sensitive directory args, auto-install (npx -y), typosquatting |
 
-### Agent Skill Threats (27 patterns)
+### Agent Skill Threats (32 patterns)
 
 | ID | Category | What It Catches |
 |----|----------|-----------------|
@@ -35,6 +35,7 @@ That's it. No install, no config. Vigile discovers your MCP server configuration
 | SK-030–033 | Safety Bypass | Confirmation bypass, safety feature disable, force flags, root/sudo escalation |
 | SK-040–043 | Persistence Abuse | Startup file modification, memory file tampering, cron jobs, git hook injection |
 | SK-050–053 | Data Exfiltration | Credential harvesting, URL-based exfiltration, filesystem enumeration, env var dumping |
+| SK-060–064 | Location Guard | GPS spoofing, location-aware triggers, geo-targeting attacks, location-based access control bypass |
 
 ## Platforms
 
@@ -160,15 +161,15 @@ When you run `--sentinel`, Vigile intercepts outbound network traffic from your 
 - **DNS tunneling** — data exfiltration hidden in DNS queries
 - **Unexpected destinations** — connections to IPs/domains outside the expected set
 
-Sentinel is available on Pro ($29/mo) and Pro+ ($99/mo) plans. Free users can run static scans with no limits.
+Sentinel is available on Pro ($30/mo) and Pro+ ($100/mo) plans. Free users can run static scans with no limits.
 
 ## Pricing
 
 | Tier | Price | Highlights |
 |------|-------|------------|
 | Free | $0/forever | Unlimited CLI scans, 50 API scans/month, registry browsing |
-| Pro | $29/mo | Sentinel monitoring (5 min, 3 servers), 1,000 API scans |
-| Pro+ | $99/mo | Sentinel (30 min, 10 servers), DNS tunneling & C2 detection, alerts |
+| Pro | $30/mo | Sentinel monitoring (5 min, 3 servers), 1,000 API scans |
+| Pro+ | $100/mo | Sentinel (30 min, 10 servers), DNS tunneling & C2 detection, alerts |
 
 ## Links
 

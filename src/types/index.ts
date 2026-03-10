@@ -54,7 +54,9 @@ export type FindingCategory =
   | 'firebase-rules-issue'
   | 'cve-detected'
   | 'cors-misconfiguration'
-  | 'auth-misconfiguration';
+  | 'auth-misconfiguration'
+  // Location Guard categories
+  | 'location-privacy';
 
 /** A single security finding from scanning */
 export interface Finding {
@@ -153,6 +155,8 @@ export interface ScanOptions {
   noUpload?: boolean;
   /** Supabase project URL to scan for RLS issues and exposed keys */
   supabase?: string;
+  /** Supabase anon key (auto-detected from bundles if omitted) */
+  supabaseKey?: string;
   /** Firebase project URL to scan for rules issues and exposed keys */
   firebase?: string;
   /** Deployed web app URL to scan for exposed secrets and BaaS misconfigs */

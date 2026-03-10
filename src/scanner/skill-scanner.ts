@@ -123,7 +123,7 @@ function analyzeStructure(skill: SkillEntry): Finding[] {
     const codeBlock = codeMatch[1];
 
     // Check for dangerous commands in code blocks
-    if (/rm\s+-rf\s+[\/~]|rm\s+-rf\s+\$\{?HOME/.test(codeBlock)) {
+    if (/rm\s+-rf\s+[/~]|rm\s+-rf\s+\$\{?HOME/.test(codeBlock)) {
       findings.push({
         id: 'SK-061',
         category: 'permission-abuse',

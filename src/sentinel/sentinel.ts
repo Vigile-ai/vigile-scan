@@ -18,13 +18,12 @@
 //   npx vigile-scan --sentinel --server <name>  # Monitor specific server
 //   npx vigile-scan --sentinel --duration 300   # Monitor for 5 minutes
 
-import { execFileSync, spawn, type ChildProcess } from 'child_process';
+import { execFileSync, type ChildProcess } from 'child_process';
 import { promises as dnsPromises } from 'dns';
 import type {
   NetworkEvent,
   SentinelFinding,
   SentinelReport,
-  SentinelThreatLevel,
 } from './sentinel-patterns.js';
 import {
   SUSPICIOUS_ENDPOINT_PATTERNS,

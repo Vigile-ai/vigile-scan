@@ -273,6 +273,7 @@ export const OBFUSCATION_PATTERNS: DetectionPattern[] = [
     category: 'obfuscation',
     severity: 'high',
     title: 'Zero-width characters detected',
+    // eslint-disable-next-line no-misleading-character-class -- intentional: detecting zero-width unicode
     pattern: /[\u200B\u200C\u200D\uFEFF\u2060\u2061\u2062\u2063\u2064]/,
     description:
       'Tool description contains invisible zero-width Unicode characters that may hide content.',

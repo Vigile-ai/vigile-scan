@@ -41,7 +41,6 @@ import {
 import { formatJSON } from './output/json.js';
 import { getAuthenticatedClient, authLogin, authStatus, authLogout } from './api/auth.js';
 import { scanVibeApp, scanSupabase, scanFirebase } from './scanner/baas/index.js';
-import type { VigileApiClient } from './api/client.js';
 import type {
   ScanOptions,
   ScanSummary,
@@ -52,7 +51,6 @@ import type {
 } from './types/index.js';
 
 // Read version dynamically so it never goes stale.
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const VERSION: string = require('../package.json').version;
 
 const program = new Command();
@@ -277,7 +275,7 @@ async function runScan(options: ScanOptions): Promise<void> {
     } else {
       // Write JSON and wait for stdout to drain — prevents truncation
       // when piped (stdout is async for pipes, sync for TTYs/files)
-      await new Promise<void>((resolve, reject) => {
+      await new Promise<void>((resolve, _reject) => {
         const ok = process.stdout.write(jsonOutput + '\n');
         if (ok) resolve();
         else process.stdout.once('drain', resolve);
