@@ -7,7 +7,7 @@
 //   Plugins: ~/.claude/plugins/cache/claude-plugins-official/<name>/<version>/.mcp.json
 
 import { join } from 'path';
-import { readdirSync, existsSync } from 'fs';
+import { readdirSync, existsSync, Dirent } from 'fs';
 import { getHome, tryConfigPaths, parseMCPConfig } from './utils.js';
 import type { MCPServerEntry } from '../types/index.js';
 
@@ -40,7 +40,7 @@ async function discoverPluginMCPConfigs(cacheDir: string): Promise<MCPServerEntr
   const servers: MCPServerEntry[] = [];
   const seen = new Set<string>();
 
-  let pluginDirs: ReturnType<typeof readdirSync>;
+  let pluginDirs: Dirent[];
   try {
     pluginDirs = readdirSync(cacheDir, { withFileTypes: true });
   } catch {
@@ -50,9 +50,10 @@ async function discoverPluginMCPConfigs(cacheDir: string): Promise<MCPServerEntr
   for (const pluginEntry of pluginDirs) {
     if (!pluginEntry.isDirectory()) continue;
 
+    // nosemgrep: path-join-resolve-traversal — inputs are from readdirSync, not user-controlled
     const pluginDir = join(cacheDir, pluginEntry.name);
 
-    let versionDirs: ReturnType<typeof readdirSync>;
+    let versionDirs: Dirent[];
     try {
       versionDirs = readdirSync(pluginDir, { withFileTypes: true });
     } catch {
@@ -62,14 +63,17 @@ async function discoverPluginMCPConfigs(cacheDir: string): Promise<MCPServerEntr
     for (const versionEntry of versionDirs) {
       if (!versionEntry.isDirectory()) continue;
 
+      // nosemgrep: path-join-resolve-traversal — inputs are from readdirSync, not user-controlled
       const versionDir = join(pluginDir, versionEntry.name);
 
       // Collect candidate .mcp.json paths: direct + one level deeper
+      // nosemgrep: path-join-resolve-traversal — inputs are from readdirSync, not user-controlled
       const candidates = [join(versionDir, '.mcp.json')];
 
       try {
         for (const sub of readdirSync(versionDir, { withFileTypes: true })) {
           if (sub.isDirectory()) {
+            // nosemgrep: path-join-resolve-traversal — inputs are from readdirSync, not user-controlled
             candidates.push(join(versionDir, sub.name, '.mcp.json'));
           }
         }

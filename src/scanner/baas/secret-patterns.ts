@@ -1000,7 +1000,7 @@ export const SECRET_PATTERNS: SecretPattern[] = [
     name: 'PGP Private Key',
     provider: 'cryptographic',
     severity: 'critical',
-    pattern: /-----BEGIN PGP PRIVATE KEY BLOCK-----/,
+    pattern: /-----BEGIN PGP PRIVATE KEY BLOCK-----/, // nosemgrep: detected-pgp-private-key-block — this is a detection pattern, not an actual key
     description: 'PGP/GPG private key embedded in source.',
     recommendation: 'Remove and revoke the key at your keyserver.',
   },
