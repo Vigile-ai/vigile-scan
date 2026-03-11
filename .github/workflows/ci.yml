@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+  actions: read
+  pull-requests: read
+
 jobs:
   build-test-audit:
     runs-on: ubuntu-latest
@@ -25,8 +30,30 @@ jobs:
       - name: Run tests
         run: npm test
 
+      - name: Run parity checker regression tests
+        run: python3 scripts/tests/test_check_pattern_parity.py
+
+      - name: Enforce CRITICAL/HIGH pattern parity gate (API counterpart)
+        run: |
+          echo "Cross-repo parity enforcement runs fail-closed in vigile-api CI (which can read vigile-scan)."
+          echo "This lane keeps checker regression tests in vigile-scan to prevent parser/gate regressions."
+
       - name: Security audit (production deps)
         run: npm audit --omit=dev --audit-level=moderate
 
       - name: Smoke test (verify CLI runs)
         run: node dist/index.js --version
+
+      - name: Generate Evidence Pack
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 scripts/generate_evidence_pack.py --output EVIDENCE_PACK.md --strict
+
+      - name: Upload Evidence Pack
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidence-pack-${{ github.run_id }}
+          path: EVIDENCE_PACK.md
+          if-no-files-found: error
